@@ -64,6 +64,8 @@ def load_generation_model():
     # 仅在模型初始化阶段补上 max_length，兼容部分 ChatGLM3 配置缺失问题
     if not hasattr(config, "max_length"):
         config.max_length = getattr(config, "seq_length", 8192)
+    if not hasattr(config, "num_hidden_layers"):
+        config.num_hidden_layers = getattr(config, "num_layers", None)
 
     base_model = AutoModel.from_pretrained(
         BASE_MODEL_NAME,
@@ -125,8 +127,8 @@ if __name__ == "__main__":
         outputs = model.generate(
             **inputs,
             max_new_tokens=100,
-            temperature=0.1,
             do_sample=False,
+            use_cache=False,
         )
 
     response = tokenizer.decode(
