@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+*.key
+*.pem
+
+# Data / cache
+data/
+datasets/
+outputs/
+logs/
+cache/
+*.log
+
+# Vector DB / model files
+*.faiss
+*.index
+*.pkl
+*.pt
+*.pth
+*.bin
+*.safetensors
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
