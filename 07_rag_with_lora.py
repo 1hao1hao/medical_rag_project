@@ -76,7 +76,7 @@ def load_generation_model():
 
     # 兼容部分新版 transformers 在生成阶段要求的缓存提取接口
     if not hasattr(base_model, "_extract_past_from_model_output"):
-        def _extract_past_from_model_output(self, outputs):
+        def _extract_past_from_model_output(self, outputs, **kwargs):
             if hasattr(outputs, "past_key_values"):
                 return outputs.past_key_values
             if isinstance(outputs, (tuple, list)) and len(outputs) > 1:
