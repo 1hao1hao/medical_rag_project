@@ -1,4 +1,5 @@
 import os
+from types import MethodType
 
 import torch
 import transformers
@@ -72,6 +73,20 @@ def load_generation_model():
         config=config,
         trust_remote_code=True,
     )
+
+    # 兼容部分新版 transformers 在生成阶段要求的缓存提取接口
+    if not hasattr(base_model, "_extract_past_from_model_output"):
+        def _extract_past_from_model_output(self, outputs):
+            if hasattr(outputs, "past_key_values"):
+                return outputs.past_key_values
+            if isinstance(outputs, (tuple, list)) and len(outputs) > 1:
+                return outputs[1]
+            return None
+
+        base_model._extract_past_from_model_output = MethodType(
+            _extract_past_from_model_output,
+            base_model,
+        )
 
     # 模型成功初始化后，移除 config 里的 max_length，避免 generate() 在
     # 新版 transformers 中将其识别为非法的生成配置来源。
