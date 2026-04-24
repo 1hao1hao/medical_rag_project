@@ -53,11 +53,15 @@ def advanced_retrieval(query, vector_db, reranker_model, top_k_recall=15, top_k_
     return scored_docs[:top_k_rerank]
 
 
+# ==========================================
+# 3. 生成模型加载
+# ==========================================
 def load_generation_model():
     print(f">>> 2. 正在加载基础大模型... ({GENERATION_DEVICE})")
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True)
     config = AutoConfig.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True)
 
+    # 仅在模型初始化阶段补上 max_length，兼容部分 ChatGLM3 配置缺失问题
     if not hasattr(config, "max_length"):
         config.max_length = getattr(config, "seq_length", 8192)
 
@@ -66,6 +70,12 @@ def load_generation_model():
         config=config,
         trust_remote_code=True,
     )
+
+    # 模型成功初始化后，移除 config 里的 max_length，避免 generate() 在
+    # 新版 transformers 中将其识别为非法的生成配置来源。
+    if hasattr(base_model.config, "max_length"):
+        delattr(base_model.config, "max_length")
+
     if GENERATION_DEVICE.startswith("cuda"):
         base_model = base_model.half()
     base_model = base_model.to(GENERATION_DEVICE)
@@ -77,7 +87,7 @@ def load_generation_model():
 
 
 # ==========================================
-# 3. 主程序
+# 4. 主程序
 # ==========================================
 if __name__ == "__main__":
     print(f">>> 1. 正在初始化检索组件... ({RETRIEVAL_DEVICE})")
