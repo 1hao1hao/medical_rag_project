@@ -51,7 +51,13 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True)
     config = AutoConfig.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True)
     # 直接加载模型，不需要手动干预 config
-    base_model = AutoModel.from_pretrained(BASE_MODEL_NAME, trust_remote_code=True).half().cuda()
+    if not hasattr(config, "max_length"):
+        config.max_length = getattr(config, "seq_length", 8192)
+    base_model = AutoModel.from_pretrained(
+        BASE_MODEL_NAME,
+        config=config,
+        trust_remote_code=True
+    ).half().cuda()
     
     print(">>> 3. 正在挂载 LoRA 微调权重...")
     # 核心代码：将 LoRA 适配器加载到基础模型上
