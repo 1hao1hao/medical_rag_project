@@ -4,6 +4,9 @@ from typing import Any, Dict
 _VALID_LLM_PROVIDERS = {"mock", "tongyi", "local"}
 _DEFAULT_CHUNK_SIZE = 500
 _DEFAULT_CHUNK_OVERLAP = 100
+_DEFAULT_EVIDENCE_MIN_TOP_SCORE = 0.25
+_DEFAULT_EVIDENCE_MIN_KEYWORD_OVERLAP = 0.15
+_DEFAULT_EVIDENCE_CONFLICT_MIN_SCORE = 0.5
 
 
 class Settings:
@@ -24,6 +27,9 @@ class Settings:
         "use_reranker",
         "chunk_size",
         "chunk_overlap",
+        "evidence_min_top_score",
+        "evidence_min_keyword_overlap",
+        "evidence_conflict_min_score",
     )
 
     def __init__(
@@ -42,6 +48,9 @@ class Settings:
         use_reranker: bool,
         chunk_size: int = _DEFAULT_CHUNK_SIZE,
         chunk_overlap: int = _DEFAULT_CHUNK_OVERLAP,
+        evidence_min_top_score: float = _DEFAULT_EVIDENCE_MIN_TOP_SCORE,
+        evidence_min_keyword_overlap: float = _DEFAULT_EVIDENCE_MIN_KEYWORD_OVERLAP,
+        evidence_conflict_min_score: float = _DEFAULT_EVIDENCE_CONFLICT_MIN_SCORE,
     ) -> None:
         self.data_dir = data_dir
         self.db_dir = db_dir
@@ -57,6 +66,9 @@ class Settings:
         self.use_reranker = use_reranker
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
+        self.evidence_min_top_score = evidence_min_top_score
+        self.evidence_min_keyword_overlap = evidence_min_keyword_overlap
+        self.evidence_conflict_min_score = evidence_conflict_min_score
         self._validate()
 
     def _validate(self) -> None:
@@ -76,6 +88,12 @@ class Settings:
             raise ValueError("chunk_overlap 不能小于 0")
         if self.chunk_overlap >= self.chunk_size:
             raise ValueError("chunk_overlap 必须小于 chunk_size")
+        if self.evidence_min_top_score < 0:
+            raise ValueError("evidence_min_top_score 不能小于 0")
+        if self.evidence_min_keyword_overlap < 0:
+            raise ValueError("evidence_min_keyword_overlap 不能小于 0")
+        if self.evidence_conflict_min_score < 0:
+            raise ValueError("evidence_conflict_min_score 不能小于 0")
 
     def to_dict(self) -> Dict[str, Any]:
         return {field: getattr(self, field) for field in self.__slots__}
@@ -102,6 +120,9 @@ _REQUIRED_KEYS = {
 _OPTIONAL_KEYS = {
     "chunk_size",
     "chunk_overlap",
+    "evidence_min_top_score",
+    "evidence_min_keyword_overlap",
+    "evidence_conflict_min_score",
 }
 
 _KNOWN_KEYS = _REQUIRED_KEYS | _OPTIONAL_KEYS
@@ -129,6 +150,20 @@ def _coerce_int(value: Any, key: str) -> int:
         if text and (text.isdigit() or (text[0] == "-" and text[1:].isdigit())):
             return int(text)
     raise ValueError(f"{key} 必须是整数")
+
+
+def _coerce_float(value: Any, key: str) -> float:
+    if isinstance(value, bool):
+        raise ValueError(f"{key} 必须是数字")
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        text = value.strip()
+        try:
+            return float(text)
+        except ValueError:
+            pass
+    raise ValueError(f"{key} 必须是数字")
 
 
 def _strip_quotes(text: str) -> str:
@@ -207,5 +242,23 @@ def load_config(path: str) -> Settings:
         chunk_size=_coerce_int(raw.get("chunk_size", _DEFAULT_CHUNK_SIZE), "chunk_size"),
         chunk_overlap=_coerce_int(
             raw.get("chunk_overlap", _DEFAULT_CHUNK_OVERLAP), "chunk_overlap"
+        ),
+        evidence_min_top_score=_coerce_float(
+            raw.get("evidence_min_top_score", _DEFAULT_EVIDENCE_MIN_TOP_SCORE),
+            "evidence_min_top_score",
+        ),
+        evidence_min_keyword_overlap=_coerce_float(
+            raw.get(
+                "evidence_min_keyword_overlap",
+                _DEFAULT_EVIDENCE_MIN_KEYWORD_OVERLAP,
+            ),
+            "evidence_min_keyword_overlap",
+        ),
+        evidence_conflict_min_score=_coerce_float(
+            raw.get(
+                "evidence_conflict_min_score",
+                _DEFAULT_EVIDENCE_CONFLICT_MIN_SCORE,
+            ),
+            "evidence_conflict_min_score",
         ),
     )
