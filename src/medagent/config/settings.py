@@ -7,6 +7,7 @@ _DEFAULT_CHUNK_OVERLAP = 100
 _DEFAULT_EVIDENCE_MIN_TOP_SCORE = 0.25
 _DEFAULT_EVIDENCE_MIN_KEYWORD_OVERLAP = 0.15
 _DEFAULT_EVIDENCE_CONFLICT_MIN_SCORE = 0.5
+_DEFAULT_MAX_RETRIEVAL_ATTEMPTS = 2
 
 
 class Settings:
@@ -30,6 +31,7 @@ class Settings:
         "evidence_min_top_score",
         "evidence_min_keyword_overlap",
         "evidence_conflict_min_score",
+        "max_retrieval_attempts",
     )
 
     def __init__(
@@ -51,6 +53,7 @@ class Settings:
         evidence_min_top_score: float = _DEFAULT_EVIDENCE_MIN_TOP_SCORE,
         evidence_min_keyword_overlap: float = _DEFAULT_EVIDENCE_MIN_KEYWORD_OVERLAP,
         evidence_conflict_min_score: float = _DEFAULT_EVIDENCE_CONFLICT_MIN_SCORE,
+        max_retrieval_attempts: int = _DEFAULT_MAX_RETRIEVAL_ATTEMPTS,
     ) -> None:
         self.data_dir = data_dir
         self.db_dir = db_dir
@@ -69,6 +72,7 @@ class Settings:
         self.evidence_min_top_score = evidence_min_top_score
         self.evidence_min_keyword_overlap = evidence_min_keyword_overlap
         self.evidence_conflict_min_score = evidence_conflict_min_score
+        self.max_retrieval_attempts = max_retrieval_attempts
         self._validate()
 
     def _validate(self) -> None:
@@ -94,6 +98,8 @@ class Settings:
             raise ValueError("evidence_min_keyword_overlap 不能小于 0")
         if self.evidence_conflict_min_score < 0:
             raise ValueError("evidence_conflict_min_score 不能小于 0")
+        if self.max_retrieval_attempts <= 0:
+            raise ValueError("max_retrieval_attempts 必须大于 0")
 
     def to_dict(self) -> Dict[str, Any]:
         return {field: getattr(self, field) for field in self.__slots__}
@@ -123,6 +129,7 @@ _OPTIONAL_KEYS = {
     "evidence_min_top_score",
     "evidence_min_keyword_overlap",
     "evidence_conflict_min_score",
+    "max_retrieval_attempts",
 }
 
 _KNOWN_KEYS = _REQUIRED_KEYS | _OPTIONAL_KEYS
@@ -260,5 +267,9 @@ def load_config(path: str) -> Settings:
                 _DEFAULT_EVIDENCE_CONFLICT_MIN_SCORE,
             ),
             "evidence_conflict_min_score",
+        ),
+        max_retrieval_attempts=_coerce_int(
+            raw.get("max_retrieval_attempts", _DEFAULT_MAX_RETRIEVAL_ATTEMPTS),
+            "max_retrieval_attempts",
         ),
     )
