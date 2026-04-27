@@ -1,0 +1,13 @@
+# SLURM + A800 离线环境配置
+data_dir: /mnt/datasets/medical_rag/data
+db_dir: /mnt/datasets/medical_rag/chroma_db
+output_dir: /mnt/experiments/medical_rag/outputs/slurm_a800_offline
+embedding_model: BAAI/bge-m3
+reranker_model: BAAI/bge-reranker-large
+llm_provider: local
+llm_model: THUDM/chatglm3-6b
+retrieval_device: cuda
+generation_device: cuda
+top_k_recall: 25
+top_k_rerank: 5
+use_reranker: true

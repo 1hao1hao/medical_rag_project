@@ -1,0 +1,13 @@
+# 本地开发（CPU）配置
+data_dir: ./data
+db_dir: ./chroma_db
+output_dir: ./outputs/dev_cpu
+embedding_model: BAAI/bge-m3
+reranker_model: BAAI/bge-reranker-large
+llm_provider: mock
+llm_model: mock-medagent
+retrieval_device: cpu
+generation_device: cpu
+top_k_recall: 15
+top_k_rerank: 3
+use_reranker: true

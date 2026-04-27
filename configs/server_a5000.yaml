@@ -1,0 +1,13 @@
+# A5000 服务器配置（在线/本地模型）
+data_dir: ./data
+db_dir: ./chroma_db
+output_dir: ./outputs/server_a5000
+embedding_model: BAAI/bge-m3
+reranker_model: BAAI/bge-reranker-large
+llm_provider: local
+llm_model: THUDM/chatglm3-6b
+retrieval_device: cuda
+generation_device: cuda
+top_k_recall: 20
+top_k_rerank: 5
+use_reranker: true
