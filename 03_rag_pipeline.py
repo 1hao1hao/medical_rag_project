@@ -14,10 +14,10 @@ RERANK_MODEL_NAME = "BAAI/bge-reranker-large"
 LLM_MODEL_NAME = "THUDM/chatglm3-6b"  # 清华开源的 6B 大模型
 
 # ==========================================
-# 2. 检索模块 (复用 Milestone 2 的逻辑)
+# 2. 检索模块（复用第二阶段逻辑）
 # ==========================================
 def get_vector_store():
-    """加载我们 Milestone 1 建好的本地向量数据库"""
+    """加载第一阶段构建好的本地向量数据库。"""
     print("正在加载本地向量数据库...")
     embeddings = HuggingFaceEmbeddings(
         model_name=EMBEDDING_MODEL_NAME,
@@ -28,7 +28,7 @@ def get_vector_store():
 
 def advanced_retrieval(query, vector_db, reranker_model, top_k_recall=15, top_k_rerank=3):
     """
-    核心算法：双段式检索 (Dual-Stage Retrieval)
+    核心算法：双阶段检索。
     """
     docs = vector_db.similarity_search(query, k=top_k_recall)
     cross_input = [[query, doc.page_content] for doc in docs]
@@ -38,13 +38,13 @@ def advanced_retrieval(query, vector_db, reranker_model, top_k_recall=15, top_k_
     return sorted_docs[:top_k_rerank]
 
 # ==========================================
-# 3. 大模型生成模块 (Milestone 3 核心)
+# 3. 大模型生成模块（第三阶段核心）
 # ==========================================
 def build_prompt(query, retrieved_docs):
     """
-    构建 Prompt：将检索到的文档拼接成上下文
-    面试考点：如何防止大模型产生幻觉（Hallucination）？
-    答：在 Prompt 中加入强约束指令，如“如果参考资料中没有相关信息，请回答无法回答，绝对不要胡编乱造”。
+    构建提示词：将检索到的文档拼接成上下文。
+    面试考点：如何防止大模型产生幻觉？
+    答：在提示词中加入强约束指令，如“如果参考资料中没有相关信息，请回答无法回答，绝对不要胡编乱造”。
     """
     context = "\n".join([f"[参考片段 {i+1}] {doc.page_content}" for i, (doc, _) in enumerate(retrieved_docs)])
     
@@ -84,13 +84,13 @@ if __name__ == "__main__":
     print(">>> 正在知识库中检索并重排...")
     top_docs = advanced_retrieval(user_query, vector_db, reranker)
     
-    # 5. 构建 Prompt 并生成答案
+    # 5. 构建提示词并生成答案
     print(">>> 正在让大模型阅读资料并生成最终回答...\n")
     prompt = build_prompt(user_query, top_docs)
     print("\n=======================================================")
     print(f"\n👨‍⚕️ 封装后的用户提问: {prompt}")
 
-    # 补全中断的代码：调用 ChatGLM3 的对话接口，history 设为空列表（单轮问答）
+    # 调用 ChatGLM3 的对话接口，history 设为空列表（单轮问答）
     response, history = llm_model.chat(tokenizer, prompt, history=[])
     
     print("\n=======================================================")

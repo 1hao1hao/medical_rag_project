@@ -29,8 +29,8 @@ def load_documents(data_dir):
 
 def split_documents(documents):
     """
-    文本切分（Chunking）
-    面试考点：Chunk size 和 overlap 怎么定？
+    文本切分（分块）
+    面试考点：分块大小和重叠长度怎么定？
     答：医疗文档上下文依赖强，设定 chunk_size=500 保证包含完整语义，overlap=100 防止生硬截断病症描述。
     后续优化方案：可以升级为 Parent-Child 切分法。
     """
@@ -40,7 +40,7 @@ def split_documents(documents):
         separators=["\n\n", "\n", "。", "！", "？", "，", " "]
     )
     chunks = text_splitter.split_documents(documents)
-    print(f"文档总计被切分为 {len(chunks)} 个数据块 (Chunks)。")
+    print(f"文档总计被切分为 {len(chunks)} 个分块。")
     return chunks
 
 def build_vector_db():
@@ -58,8 +58,8 @@ def build_vector_db():
     print("开始切分文档...")
     chunks = split_documents(docs)
 
-    # 3. 初始化 Embedding 模型
-    print("正在加载 BGE-m3 Embedding 模型 (初次运行需下载，请耐心等待)...")
+    # 3. 初始化向量嵌入模型
+    print("正在加载 BGE-m3 向量嵌入模型 (初次运行需下载，请耐心等待)...")
     model_kwargs = {'device': 'cuda'} # 如果你有显卡，改为 'cuda'
     encode_kwargs = {'normalize_embeddings': True} # 必须为 True，计算余弦相似度才准确
     
@@ -70,7 +70,7 @@ def build_vector_db():
     )
 
     # 4. 存入 Chroma 向量数据库并持久化到本地
-    print("正在将数据向量化并存入 ChromaDB...")
+    print("正在将数据向量化并存入 Chroma 向量数据库...")
     vector_db = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,

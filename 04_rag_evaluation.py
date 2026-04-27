@@ -49,7 +49,7 @@ reranker = CrossEncoder(RERANK_MODEL_NAME, device='cuda')
 # 2. 大模型组件
 chat_model = ChatTongyi(model=LLM_MODEL_NAME)
 
-# 3. RAGAS 裁判组件 (将我们的模型包装给 RAGAS 使用)
+# 3. RAGAS 裁判组件（将我们的模型包装给 RAGAS 使用）
 ragas_llm = LangchainLLMWrapper(chat_model)
 ragas_emb = LangchainEmbeddingsWrapper(embeddings)
 
@@ -57,7 +57,7 @@ ragas_emb = LangchainEmbeddingsWrapper(embeddings)
 # 3. 核心逻辑：运行 RAG 并收集数据
 # ==========================================
 def run_rag_pipeline(query):
-    """运行我们 Milestone 3 的完整链路，并返回评估所需的数据"""
+    """运行第三阶段完整链路，并返回评估所需的数据。"""
     # 1. 检索与重排
     docs = vector_db.similarity_search(query, k=15)
     cross_input = [[query, doc.page_content] for doc in docs]
@@ -83,7 +83,7 @@ def run_rag_pipeline(query):
 # 4. 构建测试集并执行评估
 # ==========================================
 if __name__ == "__main__":
-    # 1. 准备测试问题和标准答案 (Ground Truth)
+    # 1. 准备测试问题和标准答案（标注真值）
     # 在真实企业里，这通常是医生/专家标注的 100 个问题。我们这里用 2 个做演示。
     eval_data =[
         {
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         data_for_ragas["contexts"].append(contexts)
         data_for_ragas["ground_truth"].append(item["ground_truth"])
         
-    # 2. 转换为 HuggingFace Dataset 格式
+    # 2. 转换为 HuggingFace 数据集格式
     dataset = Dataset.from_dict(data_for_ragas)
     
     # 3. 启动 RAGAS 评估

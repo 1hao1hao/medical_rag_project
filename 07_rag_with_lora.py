@@ -24,7 +24,7 @@ RERANK_MODEL_NAME = "BAAI/bge-reranker-large"
 BASE_MODEL_NAME = "THUDM/chatglm3-6b"
 LORA_DIR = "./chatglm3_lora_medical"
 
-# 为了降低 24GB 显卡上的 OOM 风险，默认将检索放在 CPU，
+# 为了降低 24GB 显卡上的显存溢出风险，默认将检索放在 CPU，
 # 生成阶段优先使用 GPU。你也可以通过环境变量手动覆盖：
 # RETRIEVAL_DEVICE=cuda GENERATION_DEVICE=cuda python 07_rag_with_lora.py
 RETRIEVAL_DEVICE = os.getenv("RETRIEVAL_DEVICE", "cpu")
@@ -38,6 +38,7 @@ GENERATION_DEVICE = os.getenv(
 # 2. 检索模块
 # ==========================================
 def get_vector_store():
+    # 面试重点：检索侧与生成侧设备解耦，便于在资源受限环境做弹性部署
     embeddings = HuggingFaceEmbeddings(
         model_name=EMBEDDING_MODEL_NAME,
         model_kwargs={"device": RETRIEVAL_DEVICE},
@@ -47,6 +48,7 @@ def get_vector_store():
 
 
 def advanced_retrieval(query, vector_db, reranker_model, top_k_recall=15, top_k_rerank=3):
+    # 面试重点：先召回再重排，兼顾速度与精度
     docs = vector_db.similarity_search(query, k=top_k_recall)
     cross_input = [[query, doc.page_content] for doc in docs]
     scores = reranker_model.predict(cross_input)
@@ -74,7 +76,8 @@ def load_generation_model():
         trust_remote_code=True,
     )
 
-    # 兼容部分新版 transformers 在生成阶段要求的缓存提取接口
+    # 面试重点：兼容新版 transformers 在生成阶段要求的缓存提取接口
+    # 若基础模型未实现该接口，这里用运行时方法补齐
     if not hasattr(base_model, "_extract_past_from_model_output"):
         def _extract_past_from_model_output(self, outputs, **kwargs):
             if hasattr(outputs, "past_key_values"):
@@ -88,8 +91,8 @@ def load_generation_model():
             base_model,
         )
 
-    # 模型成功初始化后，移除 config 里的 max_length，避免 generate() 在
-    # 新版 transformers 中将其识别为非法的生成配置来源。
+    # 面试重点：模型初始化完成后移除 config.max_length，
+    # 避免 generate() 把它识别成非法生成配置来源
     if hasattr(base_model.config, "max_length"):
         delattr(base_model.config, "max_length")
 
@@ -124,10 +127,12 @@ if __name__ == "__main__":
         "你是一个专业的医疗AI助手。请严格根据【参考资料】回答问题。"
         "必须以“您好，我是AI医生。”开头。"
     )
+    # 面试重点：提示词采用“系统指令 + 检索证据 + 用户问题”三段结构
+    # 这样可将模型回答严格约束在已检索证据范围内
     input_text = f"【参考资料】\n{context}\n\n【用户问题】\n{user_query}"
     prompt = f"<|system|>\n{instruction}\n<|user|>\n{input_text}\n<|assistant|>\n"
 
-    # 在加载 ChatGLM3 之前，先释放检索阶段占用的内存和显存
+    # 面试重点：在加载 ChatGLM3 前先释放检索阶段资源，降低显存峰值
     del reranker
     del vector_db
     if torch.cuda.is_available():
@@ -139,6 +144,7 @@ if __name__ == "__main__":
     inputs = tokenizer(prompt, return_tensors="pt").to(GENERATION_DEVICE)
 
     with torch.no_grad():
+        # 面试重点：这里使用贪心解码（do_sample=False），便于结果稳定复现
         outputs = model.generate(
             **inputs,
             max_new_tokens=100,

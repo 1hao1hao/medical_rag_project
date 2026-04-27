@@ -1,16 +1,26 @@
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 .venv/
 venv/
 env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
 
 # Secrets
 .env
 *.key
 *.pem
 
-# Data / cache
+# Data / cache / runtime outputs
 data/
 datasets/
 outputs/
