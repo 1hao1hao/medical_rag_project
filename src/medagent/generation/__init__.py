@@ -1,6 +1,7 @@
 """MedAgent 生成模块。"""
 
 from .answer_generator import AnswerGenerator, generate_answer
+from .citation_guard import CitationGuard
 from .llm_client import (
     BaseLLMClient,
     LocalChatGLMClient,
@@ -16,6 +17,7 @@ __all__ = [
     "TongyiLLMClient",
     "LocalChatGLMClient",
     "create_llm_client",
+    "CitationGuard",
     "AnswerGenerator",
     "generate_answer",
     "build_system_prompt",
